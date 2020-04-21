@@ -147,18 +147,13 @@ const setupServer = () => {
     response.send(uniqArray);
   });
 
-  // - `DELETE /api/types/:name`
-  // - Deletes the given type
-
   app.delete("/api/types/:name", (request, response) => {
     const returnArrayTypes = [];
-    console.log("AAAAA");
     for (let i = 0; i < fullArrayOfPokemon.length; i++) {
       returnArrayTypes.push(fullArrayOfPokemon[i].types);
     }
     const flattenedArray = _.flatten(returnArrayTypes);
     const uniqArray = _.uniq(flattenedArray);
-    console.log(uniqArray);
 
     const name = request.params.name;
 
@@ -169,6 +164,81 @@ const setupServer = () => {
     }
 
     response.send(uniqArray);
+  });
+
+  app.get("/api/types/:type/pokemon", (request, response) => {
+    const type = request.params.type;
+    let resultArr = [];
+
+    for (let i = 0; i < fullArrayOfPokemon.length; i++) {
+      if (fullArrayOfPokemon[i].types.includes(type)) {
+        const returnObj = {};
+        returnObj.id = fullArrayOfPokemon[i].id;
+        returnObj.name = fullArrayOfPokemon[i].name;
+        resultArr.push(returnObj);
+      }
+    }
+    response.send(resultArr);
+  });
+
+  app.get("/api/attacks", (request, response) => {
+    const returnArrayAttacks = [];
+
+    for (let i = 0; i < fullArrayOfPokemon.length; i++) {
+      const attackObj = fullArrayOfPokemon[i].attacks;
+      for (const key in attackObj) {
+        returnArrayAttacks.push(attackObj[key]);
+      }
+    }
+
+    const flattenedArray = _.flatten(returnArrayAttacks);
+    const uniqArray = _.uniq(flattenedArray);
+
+    if (request.query.limit) {
+      const number = request.query.limit;
+      const possibleAttacks = [];
+      for (let i = 0; i < number; i++) {
+        possibleAttacks.push(uniqArray[i]);
+      }
+      response.send(possibleAttacks);
+    } else {
+      response.send(uniqArray);
+    }
+  });
+
+  // - `GET /api/attacks/fast`
+  // - It should return fast attacks
+  // - It is able to take a query parameter `limit=n` that makes the endpoint only return `n` attacks
+
+  app.get("/api/attacks/fast", (request, response) => {
+    const returnArrayAttacks = [];
+    for (let i = 0; i < fullArrayOfPokemon.length; i++) {
+      returnArrayAttacks.push(fullArrayOfPokemon[i].attacks.fast);
+    }
+    const flattenedArray = _.flatten(returnArrayAttacks);
+
+    //create array of attacks using unique attack names
+    // let uniqAttacks = [];
+    let pushed = {};
+    let result = [];
+
+    for (let i = 0; i < flattenedArray.length; i++) {
+      if (!pushed[flattenedArray[i].name]) {
+        result.push(flattenedArray[i]);
+        pushed[flattenedArray[i].name] = true;
+      }
+    }
+
+    if (request.query.limit) {
+      const number = request.query.limit;
+      const possibleAttacks = [];
+      for (let i = 0; i < number; i++) {
+        possibleAttacks.push(result[i]);
+      }
+      response.send(possibleAttacks);
+    } else {
+      response.send(result);
+    }
   });
 
   return app;
