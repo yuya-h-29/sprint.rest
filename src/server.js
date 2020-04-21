@@ -45,21 +45,19 @@ const setupServer = () => {
     response.send(pokemon);
   });
 
-  // app.patch("/api/pokemon/:idOrName", (request, response) => {
-  //   const newIdOrName = request.query.newIdOrName;
-  //   const idOrName = request.params.idOrName;
-  //   let pokemon;
-  //   if (Number(idOrName)) {
-  //     pokemon = fullArrayOfPokemon[idOrName - 1];
-  //   } else {
-  //     for (let i = 0; i < fullArrayOfPokemon.length; i++) {
-  //       if (fullArrayOfPokemon[i].name === idOrName) {
-  //         pokemon = fullArrayOfPokemon[i];
-  //       }
-  //     }
-  //   }
-  //   response.send(pokemon);
-  // });
+  //It should allow you to make partial modifications to a Pokemon
+  app.patch("/api/pokemon/:idOrName", (request, response) => {
+    const idOrName = request.params.idOrName;
+    fullArrayOfPokemon.forEach((pokemon) => {
+      if (
+        Number(pokemon.id) === Number(idOrName) ||
+        pokemon.name.toLowerCase() === idOrName.toLowerCase()
+      ) {
+        pokemon = Object.assign(pokemon, request.body);
+        response.send(pokemon);
+      }
+    });
+  });
 
   app.delete("/api/pokemon/:idOrName", (request, response) => {
     const idOrName = request.params.idOrName;
@@ -367,6 +365,42 @@ const setupServer = () => {
 
   // - `PATCH /api/attacks/:name`
   // - Modifies specified attack
+  app.patch("/api/attacks/:name", (request, response) => {
+    const attackName = request.params.name;
+    const editValues = request.body;
+
+    //array of unique attacks
+    const returnArrayAttacks = [];
+    for (let i = 0; i < fullArrayOfPokemon.length; i++) {
+      const attackObj = fullArrayOfPokemon[i].attacks;
+      for (const key in attackObj) {
+        returnArrayAttacks.push(attackObj[key]);
+      }
+    }
+    const flattenedArray = _.flatten(returnArrayAttacks);
+
+    let pushed = {};
+    let result = [];
+
+    for (let i = 0; i < flattenedArray.length; i++) {
+      if (!pushed[flattenedArray[i].name]) {
+        result.push(flattenedArray[i]);
+        pushed[flattenedArray[i].name] = true;
+      }
+    }
+
+    for (let i = 0; i < result.length; i++) {
+      if (result[i].name === attackName) {
+        for (var key in editValues) {
+          if (result[i][key]) {
+            console.log(result[i][key]);
+            result[i][key] = editValues[key];
+          }
+        }
+      }
+    }
+    response.send(result);
+  });
 
   // - `DELETE /api/attacks/:name`
   // - Deletes an attack
